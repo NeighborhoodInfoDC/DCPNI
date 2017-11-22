@@ -154,7 +154,7 @@ proc summary data=compile_dcpni_&ngbhd;
 	output out=compile_dcpni_sum_&ngbhd sum=;
 	run;
 
-data compile_dcpni_sum_final_&ngbhd
+data compile_dcpni_final_&ngbhd
 	(drop=crimes_pt1_property_2000 crimes_pt1_property_2001 
 			crimes_pt1_property_2002 crimes_pt1_property_2003 crimes_pt1_property_2004 
 			crimes_pt1_property_2005 crimes_pt1_property_2006 crimes_pt1_property_2007 
@@ -212,7 +212,7 @@ data compile_dcpni_sum_final_&ngbhd
 
 run;
 
-proc export data=compile_dcpni_sum_final_&ngbhd 
+proc export data=compile_dcpni_final_&ngbhd 
 	outfile="D:\DCData\Libraries\DCPNI\data\dcpnitabs_&ngbhd..csv"
 	dbms=csv replace;
 	run;
