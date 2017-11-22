@@ -1,14 +1,13 @@
 /**************************************************************************
- Program:  BPKPresentationResults.sas
- Library:  BridgePk
+ Program:  DCPNI Tabs_Nov 2017.sas
+ Library:  DCPNI
  Project:  NeighborhoodInfo DC
- Author:   J.Dev
- Created:  3/20/17
- Version:  SAS 9.2
+ Author:   S Diby
+ Created:  11/22/17
+ Version:  SAS 9.4
  Environment:  Local Windows session
  
- Description:  Prepare data for initial 11th Street Bridge Park Data Room
-			   Presentation on 3/27/2017, from ACS, Realprop, and Police
+ Description:  Prepare DCPNI data and export CSVs for final formatting.
 
 **************************************************************************/
 
@@ -21,9 +20,59 @@
 %DCData_lib( TANF )
 
 
-%macro Compile_dcpni_data (geo, geosuf, subgeo, ngbhd);
+%macro Compile_dcpni_data (ngbhd);
 
-data compile_dcpni_&geosuf;
+%if %upcase( &ngbhd ) = KENILWORTH  %then %do;
+	%let geo = geo2010;
+	%let geosuf = tr10;
+	%let subgeo = "11001009601";
+%end;
+%else %if %upcase( &ngbhd ) = PARKSIDE  %then %do;
+	%let geo = geo2010;
+	%let geosuf = tr10;
+	%let subgeo = "11001009602";
+%end;
+%else %if %upcase( &ngbhd ) = KP  %then %do;
+	%let geo = geo2010;
+	%let geosuf = tr10;
+	%let subgeo = "11001009601", "11001009602";
+%end;
+%else %if %upcase( &ngbhd ) = BENNING  %then %do;
+	%let geo = geo2010;
+	%let geosuf = tr10;
+	%let subgeo = "11001009907";
+%end;
+%else %if %upcase( &ngbhd ) = LINCOLNHT  %then %do;
+	%let geo = geo2010;
+	%let geosuf = tr10;
+	%let subgeo = "11001007804";
+%end;
+%else %if %upcase( &ngbhd ) = WARD6  %then %do;
+	%let geo = ward2012;
+	%let geosuf = wd12;
+	%let subgeo = "6";
+%end;
+%else %if %upcase( &ngbhd ) = WARD7  %then %do;
+	%let geo = ward2012;
+	%let geosuf = wd12;
+	%let subgeo = "7";
+%end;
+%else %if %upcase( &ngbhd ) = WARD8  %then %do;
+	%let geo = ward2012;
+	%let geosuf = wd12;
+	%let subgeo = "8";
+%end;
+%else %if %upcase( &ngbhd ) = CITY  %then %do;
+	%let geo = city;
+	%let geosuf = city;
+	%let subgeo = "1";
+%end;
+%else %do;
+    %err_mput( macro= Compile_dcpni_data, msg=Geography is not supported. )
+%end;
+
+
+data compile_dcpni_&ngbhd;
 	merge 
 		RealProp.num_units_&geosuf 
 			(keep= &geo units_sf_2000 units_sf_2001 units_sf_2002 
@@ -100,13 +149,12 @@ data compile_dcpni_&geosuf;
 	if &geo in ( &subgeo);
 run;
 
-proc summary data=compile_dcpni_&geosuf;
+proc summary data=compile_dcpni_&ngbhd;
 	var _numeric_;
-	by &geo;
-	output out=compile_dcpni_sum_&geosuf sum=;
+	output out=compile_dcpni_sum_&ngbhd sum=;
 	run;
 
-data compile_dcpni_sum_final_&geosuf
+data compile_dcpni_sum_final_&ngbhd
 	(drop=crimes_pt1_property_2000 crimes_pt1_property_2001 
 			crimes_pt1_property_2002 crimes_pt1_property_2003 crimes_pt1_property_2004 
 			crimes_pt1_property_2005 crimes_pt1_property_2006 crimes_pt1_property_2007 
@@ -125,7 +173,7 @@ data compile_dcpni_sum_final_&geosuf
 			crime_rate_pop_2012 crime_rate_pop_2013 crime_rate_pop_2014 crime_rate_pop_2015 
 			crime_rate_pop_2016);
 
-	set compile_dcpni_sum_&geosuf;
+	set compile_dcpni_sum_&ngbhd;
 
 		property_crime_rate_2000 = crimes_pt1_property_2000 / crime_rate_pop_2000;
 		property_crime_rate_2001 = crimes_pt1_property_2001 / crime_rate_pop_2001;
@@ -164,7 +212,7 @@ data compile_dcpni_sum_final_&geosuf
 
 run;
 
-proc export data=compile_dcpni_sum_final_&geosuf (where=(&geo=&subgeo))
+proc export data=compile_dcpni_sum_final_&ngbhd 
 	outfile="D:\DCData\Libraries\DCPNI\data\dcpnitabs_&ngbhd..csv"
 	dbms=csv replace;
 	run;
@@ -173,15 +221,15 @@ proc export data=compile_dcpni_sum_final_&geosuf (where=(&geo=&subgeo))
 %mend Compile_dcpni_data;
 
 
-%Compile_dcpni_data (geo2010, tr10, "11001009601", kenilworth);
-%Compile_dcpni_data (geo2010, tr10, "11001009602", parkside);
-%Compile_dcpni_data (geo2010, tr10, "11001009601", "11001009602", kenilworthparkside);
-%Compile_dcpni_data (geo2010, tr10, "11001009907", benningterrace);
-%Compile_dcpni_data (geo2010, tr10, "11001007804", lincolnheights);
-%Compile_dcpni_data (ward2012, wd12, "6", ward6);
-%Compile_dcpni_data (ward2012, wd12, "7", ward7);
-%Compile_dcpni_data (ward2012, wd12, "8", ward8);
-%Compile_dcpni_data (city, city, "1", city);
+%Compile_dcpni_data (kenilworth);
+%Compile_dcpni_data (parkside);
+%Compile_dcpni_data (kp);
+%Compile_dcpni_data (benning);
+%Compile_dcpni_data (lincolnht);
+%Compile_dcpni_data (ward6);
+%Compile_dcpni_data (ward7);
+%Compile_dcpni_data (ward8);
+%Compile_dcpni_data (city);
 
 
 
